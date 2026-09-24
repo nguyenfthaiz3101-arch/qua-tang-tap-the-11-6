@@ -1,0 +1,2173 @@
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saphocit</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Mali:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&family=Pacifico&family=Noto+Sans:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <style>
+        /* Loading Overlay */
+
+        @keyframes loadingFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @keyframes loadingPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+        }
+
+        @media (max-width: 768px) {
+            #loading-overlay .loading-title {
+                font-size: 28px;
+                padding: 0 25px;
+            }
+
+            #loading-overlay .loading-heart {
+                font-size: 50px;
+            }
+
+            #loading-overlay .loading-text {
+                font-size: 12px;
+                letter-spacing: 2px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #loading-overlay .loading-title {
+                font-size: 22px;
+                padding: 0 15px;
+            }
+
+            #loading-overlay .loading-heart {
+                font-size: 40px;
+            }
+        }
+
+        html,
+        body {
+            background: #0a0512 !important;
+            color-scheme: dark;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: "Mali", Arial, sans-serif;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        body {
+            background: #0a0512;
+            background: radial-gradient(ellipse at center bottom, #2d1b4e 0%, #1a0a2e 30%, #0a0512 70%, #050208 100%);
+        }
+
+        canvas {
+            display: block;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @media screen and (max-width: 768px) {
+            canvas {
+                max-width: 100vw;
+                max-height: 100vh;
+            }
+
+            * {
+                touch-action: manipulation;
+            }
+        }
+
+        #musicToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 20px;
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(185, 28, 28, 0.3));
+            border: 2px solid rgba(220, 38, 38, 0.6);
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 999;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4), 0 0 20px rgba(220, 38, 38, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #fff;
+            backdrop-filter: blur(10px);
+        }
+
+        #musicToggle:hover {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.5));
+            border-color: rgba(239, 68, 68, 0.9);
+            box-shadow: 0 6px 25px rgba(239, 68, 68, 0.6), 0 0 30px rgba(239, 68, 68, 0.4);
+            transform: scale(1.1);
+        }
+
+        #musicToggle:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes pulse-heart {
+
+            0%,
+            100% {
+                box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4), 0 0 20px rgba(220, 38, 38, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 4px 20px rgba(239, 68, 68, 0.6), 0 0 30px rgba(239, 68, 68, 0.4);
+            }
+        }
+
+        #musicToggle.playing {
+            animation: pulse-heart 2s ease-in-out infinite;
+        }
+
+        /* Create Template Button (top-left) — hiện khi không có ?id (chế độ không call API) */
+        #createTemplateBtn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.25), rgba(185, 28, 28, 0.35));
+            border: 2px solid rgba(220, 38, 38, 0.6);
+            border-radius: 30px;
+            color: #fff;
+            font-family: 'Mali', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            z-index: 999;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4), 0 0 20px rgba(220, 38, 38, 0.2);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        #createTemplateBtn.visible {
+            display: inline-flex;
+        }
+
+        #createTemplateBtn:hover {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.5));
+            border-color: rgba(239, 68, 68, 0.9);
+            box-shadow: 0 6px 25px rgba(239, 68, 68, 0.6), 0 0 30px rgba(239, 68, 68, 0.4);
+            transform: scale(1.05);
+        }
+
+        #createTemplateBtn:active {
+            transform: scale(0.95);
+        }
+
+        #createTemplateBtn i {
+            font-size: 14px;
+            color: #ff8fab;
+        }
+
+        @media (max-width: 768px) {
+            #createTemplateBtn {
+                font-size: 13px;
+                padding: 8px 14px;
+                gap: 6px;
+                top: 16px;
+                left: 16px;
+            }
+        }
+
+        /* Shooting Stars */
+        .shooting-stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        @keyframes shooting-star-opacity {
+            0% {
+                opacity: 0;
+            }
+
+            40% {
+                opacity: 1;
+            }
+
+            60% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes shooting-star-pos {
+            0% {
+                transform: scale(0) rotate(0) translate3d(0, 0, 0);
+            }
+
+            100% {
+                transform: scale(1) rotate(0) translate3d(-450px, 450px, 0);
+            }
+        }
+
+        .shooting-star {
+            display: block;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #fff;
+            position: absolute;
+            transform-origin: 100% 0;
+            animation: shooting-star-opacity 6s infinite ease-in, shooting-star-pos 6s infinite ease-in;
+            box-shadow: 0 0 8px 3px rgba(255, 255, 255, 0.4);
+            opacity: 0;
+        }
+
+        .shooting-star:after {
+            content: '';
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 3px;
+            border: 0 solid #fff;
+            border-width: 0 80px 1.5px;
+            border-color: transparent transparent transparent rgba(255, 255, 255, 0.4);
+            transform: rotate(-45deg) translate3d(1px, 2px, 0);
+            box-shadow: 0 0 2px 0 rgba(255, 255, 255, 0.2);
+            transform-origin: 0% 100%;
+        }
+
+        #text-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .floating-text {
+            position: absolute;
+            transform: translate(-50%, -50%) scale(1);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.27), opacity 0.3s;
+            font-weight: 500;
+            font-size: 14px;
+            color: white;
+            width: 300px;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+            will-change: transform, opacity;
+            pointer-events: auto;
+            cursor: grab;
+            touch-action: none;
+            user-select: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 5px 10px;
+            border-radius: 5px;
+            box-sizing: border-box;
+            max-width: 80vw;
+        }
+
+        .floating-image {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            object-fit: cover;
+            background: transparent;
+            box-shadow: none;
+            border: none;
+            pointer-events: auto;
+            cursor: grab;
+            border-radius: 5px;
+            transform: translate(-50%, -50%) scale(1);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.27), opacity 0.3s;
+            user-select: none;
+            will-change: transform, opacity;
+            -webkit-user-drag: none;
+            touch-action: none;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            background-color: transparent;
+            padding: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            cursor: zoom-out;
+            object-fit: contain;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-close-btn i {
+            font-size: 20px;
+            color: #333;
+        }
+
+        .modal-close-btn:hover {
+            background-color: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .modal-content {
+                max-width: 95%;
+                max-height: 85%;
+                padding: 10px;
+            }
+
+            .modal-content img {
+                width: 100%;
+                height: auto;
+                max-height: 80vh;
+                object-fit: contain;
+            }
+
+            .modal-close-btn {
+                top: 10px;
+                right: 10px;
+                width: 36px;
+                height: 36px;
+            }
+        }
+
+        /* Tap Hint */
+        .tap-hint {
+            position: fixed;
+            bottom: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            animation: fadeInHint 1s ease-out 4s forwards;
+        }
+
+        .tap-hint-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tap-hint-icon {
+            width: 50px;
+            height: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: tapPulse 1.5s ease-in-out infinite;
+            background: rgba(255, 105, 180, 0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        .tap-hint-icon::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+        }
+
+        .tap-hint-text {
+            font-family: 'Mali', sans-serif;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            animation: textGlow 2s ease-in-out infinite;
+        }
+
+        .tap-hint-arrow {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.8);
+            animation: bounceArrow 1s ease-in-out infinite;
+        }
+
+        @keyframes fadeInHint {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @keyframes tapPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(255, 105, 180, 0.4);
+            }
+
+            50% {
+                transform: scale(1.15);
+                box-shadow: 0 0 30px rgba(255, 105, 180, 0.7);
+            }
+        }
+
+        @keyframes textGlow {
+
+            0%,
+            100% {
+                text-shadow: 0 2px 10px rgba(255, 105, 180, 0.3);
+            }
+
+            50% {
+                text-shadow: 0 2px 20px rgba(255, 105, 180, 0.8);
+            }
+        }
+
+        @keyframes bounceArrow {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .tap-hint.hidden {
+            animation: fadeOutHint 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeOutHint {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .tap-hint {
+                bottom: 20%;
+            }
+
+            .tap-hint-icon {
+                width: 45px;
+                height: 45px;
+            }
+
+            .tap-hint-text {
+                font-size: 14px;
+            }
+        }
+
+        /* Envelope letter from clone.html */
+        #envelope-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 519;
+            background: transparent;
+            pointer-events: none;
+        }
+
+        #envelope-overlay.show {
+            pointer-events: auto;
+        }
+
+        #letter-stage {
+            position: fixed;
+            inset: 0;
+            z-index: 520;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.82);
+            transition: opacity 0.45s ease, transform 0.45s ease;
+        }
+
+        #letter-stage.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        #letter-stage.opening {
+            animation: letterStageOpen 0.55s ease forwards;
+            pointer-events: none;
+        }
+
+        @keyframes letterStageOpen {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            55% {
+                opacity: 0.85;
+                transform: scale(1.16) rotate(4deg);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.35) rotate(-8deg);
+            }
+        }
+
+        #letter-stage .letter {
+            position: relative;
+            z-index: 1;
+            width: 330px;
+            height: 292px;
+            filter: drop-shadow(0 0 30px rgba(255, 105, 180, 0.45));
+            transform: scale(0.7);
+        }
+
+        #letter-stage .valentines {
+            position: relative;
+            top: 50px;
+            cursor: pointer;
+            animation: letterFloat 3s linear infinite;
+            width: 300px;
+            height: 200px;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #letter-stage .valentines:focus-visible {
+            filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.8));
+        }
+
+        @keyframes letterFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-30px);
+            }
+        }
+
+        #letter-stage .envelope {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            background-color: #f08080;
+        }
+
+        #letter-stage .envelope:before {
+            background-color: #f08080;
+            content: "";
+            position: absolute;
+            width: 212px;
+            height: 212px;
+            transform: rotate(45deg);
+            top: -105px;
+            left: 44px;
+            border-radius: 30px 0 0 0;
+        }
+
+        #letter-stage .front {
+            position: absolute;
+            border-right: 180px solid #f4978e;
+            border-top: 95px solid transparent;
+            border-bottom: 100px solid transparent;
+            left: 120px;
+            top: 5px;
+            width: 0;
+            height: 0;
+            z-index: 10;
+        }
+
+        #letter-stage .front:before {
+            position: absolute;
+            content: "";
+            border-left: 300px solid #f8ad9d;
+            border-top: 195px solid transparent;
+            left: -120px;
+            top: -95px;
+            width: 0;
+            height: 0;
+        }
+
+        #letter-stage .card {
+            position: absolute;
+            background-color: #eae2b7;
+            width: 270px;
+            height: 170px;
+            top: 5px;
+            left: 15px;
+            box-shadow: -5px -5px 100px rgba(0, 0, 0, 0.4);
+            transition: top 0.55s ease;
+        }
+
+        #letter-stage .valentines:hover .card,
+        #letter-stage .valentines:focus-visible .card {
+            top: -90px;
+        }
+
+        #letter-stage .card:before {
+            content: "";
+            position: absolute;
+            border: 3px dotted #003049;
+            width: 240px;
+            height: 140px;
+            left: 12px;
+            top: 12px;
+        }
+
+        #letter-stage .text {
+            position: absolute;
+            font-family: "Brush Script MT", "Dancing Script", cursive;
+            font-size: 30px;
+            text-align: center;
+            line-height: 25px;
+            top: 19px;
+            left: 85px;
+            color: #003049;
+        }
+
+        #letter-stage .heart,
+        #letter-stage .one,
+        #letter-stage .two,
+        #letter-stage .three,
+        #letter-stage .four,
+        #letter-stage .five {
+            background-color: #d62828;
+            display: inline-block;
+            position: relative;
+            transform: rotate(-45deg);
+        }
+
+        #letter-stage .heart {
+            height: 30px;
+            margin: 0 10px;
+            top: 80px;
+            left: 105px;
+            width: 30px;
+        }
+
+        #letter-stage .heart:before,
+        #letter-stage .heart:after,
+        #letter-stage .one:before,
+        #letter-stage .one:after,
+        #letter-stage .two:before,
+        #letter-stage .two:after,
+        #letter-stage .three:before,
+        #letter-stage .three:after,
+        #letter-stage .four:before,
+        #letter-stage .four:after,
+        #letter-stage .five:before,
+        #letter-stage .five:after {
+            content: "";
+            background-color: inherit;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        #letter-stage .heart:before,
+        #letter-stage .heart:after {
+            height: 30px;
+            width: 30px;
+        }
+
+        #letter-stage .heart:before {
+            top: -15px;
+            left: 0;
+        }
+
+        #letter-stage .heart:after {
+            left: 15px;
+            top: 0;
+        }
+
+        #letter-stage .hearts {
+            position: absolute;
+            top: 0;
+        }
+
+        #letter-stage .one,
+        #letter-stage .two,
+        #letter-stage .three,
+        #letter-stage .four,
+        #letter-stage .five {
+            height: 10px;
+            margin: 0 10px;
+            width: 10px;
+            top: 50px;
+        }
+
+        #letter-stage .one:before,
+        #letter-stage .one:after,
+        #letter-stage .two:before,
+        #letter-stage .two:after,
+        #letter-stage .three:before,
+        #letter-stage .three:after,
+        #letter-stage .four:before,
+        #letter-stage .four:after,
+        #letter-stage .five:before,
+        #letter-stage .five:after {
+            height: 10px;
+            width: 10px;
+        }
+
+        #letter-stage .one:before,
+        #letter-stage .two:before,
+        #letter-stage .three:before,
+        #letter-stage .four:before,
+        #letter-stage .five:before {
+            top: -5px;
+            left: 0;
+        }
+
+        #letter-stage .one:after,
+        #letter-stage .two:after,
+        #letter-stage .three:after,
+        #letter-stage .four:after,
+        #letter-stage .five:after {
+            left: 5px;
+            top: 0;
+        }
+
+        #letter-stage .one {
+            left: 10px;
+            animation: flyingHeart 1s ease-out infinite;
+        }
+
+        #letter-stage .two {
+            left: 30px;
+            animation: flyingHeart 1.5s ease-out infinite;
+        }
+
+        #letter-stage .three {
+            left: 50px;
+            animation: flyingHeart 2s ease-out infinite;
+        }
+
+        #letter-stage .four {
+            left: 70px;
+            animation: flyingHeart 2.3s ease-out infinite;
+        }
+
+        #letter-stage .five {
+            left: 90px;
+            animation: flyingHeart 1.7s ease-out infinite;
+        }
+
+        @keyframes flyingHeart {
+            0% {
+                transform: translateY(0) rotate(-45deg) scale(0.3);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-150px) rotate(-45deg) scale(1.3);
+                opacity: 0.5;
+            }
+        }
+
+        #letter-stage .shadow {
+            position: absolute;
+            width: 330px;
+            height: 25px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.3);
+            top: 265px;
+            left: -15px;
+            animation: letterShadow 3s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes letterShadow {
+
+            0%,
+            100% {
+                transform: scaleX(1);
+            }
+
+            50% {
+                transform: scaleX(0.85);
+            }
+        }
+
+        .wrapperLetterForm {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+            box-sizing: border-box;
+            display: none;
+            background: rgba(0, 0, 0, 0.72);
+        }
+
+        .wrapperLetterForm.show {
+            display: flex;
+        }
+
+        .wrapperLetterForm .boxLetter {
+            position: relative;
+            width: min(600px, 92vw);
+            min-height: min(350px, 78vh);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: letterPaperAppear 0.45s ease both;
+            transform: scale(0.8);
+        }
+
+        @keyframes letterPaperAppear {
+            from { 
+                opacity: 0;
+                transform: translateY(28px) scale(0.92);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .wrapperLetterForm .formLetter {
+            position: relative;
+            width: 600px;
+            min-height: 350px;
+            background-color: #ffebeb;
+            border-radius: 20px;
+            z-index: 100;
+            padding: 20px 15px;
+            box-shadow: rgba(0, 0, 0, 0.24) 0 3px 8px;
+            box-sizing: border-box;
+        }
+
+        .wrapperLetterForm .wrapperLetter {
+            position: relative;
+            width: 100%;
+            min-height: 310px;
+            border: 2px dashed #ff6666;
+            border-radius: inherit;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .wrapperLetterForm .boxLetter .before {
+            position: absolute;
+            width: min(600px, 92vw);
+            height: min(350px, 78vh);
+            background: #fff;
+            transform: rotate(-15deg);
+            border-radius: 20px;
+            z-index: 10;
+        }
+
+        .wrapperLetterForm .heartLetter {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ffebeb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .wrapperLetterForm .heartLetterItem {
+            position: relative;
+            width: 10px;
+            height: 10px;
+            transform: rotate(45deg);
+            background: #ff6666;
+        }
+
+        .wrapperLetterForm .heartLetter:first-child {
+            right: 5px;
+            top: 10px;
+        }
+
+        .wrapperLetterForm .heartLetter:nth-child(2) {
+            left: 5px;
+            bottom: 10px;
+        }
+
+        .wrapperLetterForm .heartLetterItem::before,
+        .wrapperLetterForm .heartLetterItem::after {
+            position: absolute;
+            content: "";
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: inherit;
+        }
+
+        .wrapperLetterForm .heartLetterItem::before {
+            top: -50%;
+        }
+
+        .wrapperLetterForm .heartLetterItem::after {
+            left: -50%;
+        }
+
+        .wrapperLetterForm .giftbox {
+            display: none;
+        }
+
+        .wrapperLetterForm .giftbox .img {
+            display: none;
+        }
+
+        .wrapperLetterForm .giftbox img {
+            width: 100%;
+        }
+
+        .wrapperLetterForm .textLetter {
+            width: 100%;
+            flex: 1;
+
+            display: flex;
+            flex-direction: column;
+
+            justify-content: center;
+            align-items: center;
+
+            text-align: center;
+        }
+
+        .wrapperLetterForm .textLetter h2 {
+            min-height: 42px;
+            margin: 0;
+            font-size: clamp(28px, 5vw, 34px);
+            line-height: 1.2;
+            font-family: "Dancing Script", cursive;
+            color: #c41e3a;
+            text-align: center;
+        }
+
+        .wrapperLetterForm .contentLetter {
+            width: 100%;
+            margin: 0 auto;
+
+            text-align: center;
+            line-height: 1.5;
+            color: #4a2228;
+        }
+
+        .wrapperLetterForm .letter-close {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            width: 34px;
+            height: 34px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(196, 30, 58, 0.12);
+            color: #c41e3a;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 130;
+            transition: transform 0.25s ease, background 0.25s ease;
+        }
+
+        .wrapperLetterForm .letter-close:hover {
+            background: rgba(196, 30, 58, 0.22);
+            transform: scale(1.08);
+        }
+
+        .wrapperLetterForm .heartAnimation {
+            position: absolute;
+            width: 150px;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        .wrapperLetterForm .heartAnimation img {
+            width: 100%;
+            display: block;
+        }
+
+        .wrapperLetterForm .mewmew1,
+        .wrapperLetterForm .mewmew2 {
+            position: absolute;
+            width: 90px;
+            bottom: 0;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .wrapperLetterForm .mewmew1 {
+            left: 0;
+        }
+
+        .wrapperLetterForm .mewmew2 {
+            right: 0;
+        }
+
+        .wrapperLetterForm .mewmew1 img,
+        .wrapperLetterForm .mewmew2 img {
+            width: 100%;
+            display: block;
+        }
+
+        .wrapperLetterForm .signature {
+            position: absolute;
+            bottom: 10px;
+            right: 14px;
+            font-family: "Dancing Script", cursive;
+            font-size: 21px;
+            color: #ff6666;
+            font-style: italic;
+            text-align: right;
+            z-index: 5;
+        }
+
+        .wrapperLetterForm .typewriter-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: #c41e3a;
+            margin-left: 2px;
+            animation: cursorBlink 0.8s infinite;
+            vertical-align: text-bottom;
+        }
+
+        @keyframes cursorBlink {
+
+            0%,
+            50% {
+                opacity: 1;
+            }
+
+            51%,
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 680px) {
+            #letter-stage .letter {
+                transform: scale(0.7);
+            }
+
+            .wrapperLetterForm .boxLetter .before {
+                display: none;
+            }
+
+            .wrapperLetterForm .formLetter {
+                width: 100%;
+                min-height: auto;
+                padding: 16px 12px;
+            }
+
+            .wrapperLetterForm .wrapperLetter {
+                flex-direction: column;
+                align-items: center;
+                min-height: min(560px, 78vh);
+                overflow-y: auto;
+            }
+
+            .wrapperLetterForm .giftbox {
+                width: 100%;
+                min-height: 110px;
+            }
+
+            .wrapperLetterForm .giftbox .img {
+                left: 50%;
+                bottom: -8px;
+                transform: translateX(-50%) scale(0.8);
+            }
+
+            .wrapperLetterForm .textLetter {
+                width: 100%;
+                padding: 0 8px 74px;
+            }
+
+            .wrapperLetterForm .contentLetter {
+                min-height: 160px;
+                padding: 0 10px;
+            }
+
+            .wrapperLetterForm .signature {
+                right: 18px;
+                bottom: 12px;
+                font-size: 19px;
+            }
+
+            .wrapperLetterForm .heartAnimation {
+                right: 0;
+                bottom: 8px;
+                width: 120px;
+            }
+
+            .wrapperLetterForm .mewmew1,
+            .wrapperLetterForm .mewmew2 {
+                width: 72px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Tap Hint -->
+    <div class="tap-hint" id="tapHint" style="display:none">
+        <div class="tap-hint-content">
+            <div class="tap-hint-arrow">↑</div>
+            <div class="tap-hint-text">Chạm vào để xem 💖</div>
+            <div class="tap-hint-icon"></div>
+        </div>
+    </div>
+
+    <div id="text-container"></div>
+    <div class="shooting-stars" id="shooting-stars"></div>
+    <!-- Modal cho ảnh -->
+    <div id="image-modal" class="modal-overlay">
+        <button class="modal-close-btn" id="modal-close-btn">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="modal-content">
+            <img id="modal-image" src="" alt="Ảnh phóng to">
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Giải mã Base64URL string thành object
+         */
+        function decodeData(encodedString) {
+            try {
+                let base64 = encodedString
+                    .replace(/-/g, '+')
+                    .replace(/_/g, '/');
+                while (base64.length % 4) {
+                    base64 += '=';
+                }
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const decompressed = pako.inflate(bytes, { to: 'string' });
+                const data = JSON.parse(decompressed);
+                return data;
+            } catch (e) {
+                console.error("Lỗi khi giải mã dữ liệu:", e);
+                return null;
+            }
+        }
+
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const compressedContent = urlParams.get("c");
+            if (compressedContent) {
+                const content = decodeData(compressedContent);
+                if (content) {
+                    if (name === "title" && content.title) return content.title;
+                    if (name === "music" && content.music) return content.music;
+                    if (name === "messages" && content.messages) return content.messages;
+                    if (name === "image" && content.image) return content.image;
+                    if (name === "popupMessage" && content.popupMessage) return content.popupMessage;
+                }
+            }
+            const regularParam = urlParams.get(name);
+            if (regularParam) {
+                return decodeURIComponent(regularParam);
+            }
+            return null;
+
+        }
+        // Giá trị mặc định
+        const defaultData = {
+            "template": "love",
+            "data": {
+                "title": "G\u1eedi em !",
+                "type_music": "link",
+                "music_id": "image/nhac.mp3",
+                "backgroundMusic": "image/nhac.mp3",
+                "popupMessage": "Chúc em một ngày tốt lành. Nếu chưa tốt thì nhắn anh, anh cũng chẳng biết làm gì nhưng sẽ đọc. 😭",
+                "messages": [
+                    "Gửi Trà Myyy 💖💕",
+                    "Cute 💝",
+                    "Ăn Mau Chóng Lớn 💕"
+
+                ],
+                "images": ["image/anh1.jpg", "image/anh2.jpg", "image/anh3.jpg", "image/anh4.jpg", "image/anh5.jpg", "image/anh6.jpg", "image/anh7.jpg", "image/anh8.jpg", "image/anh9.jpg", "image/anh10.jpg"]
+            }
+        };
+
+        // ==================== CONFIG LOADING ====================
+        const urlParams = new URLSearchParams(window.location.search);
+        const cfgId = urlParams.get('id');
+
+        const urlMusic = getUrlParameter("music");
+        const urlMessages = getUrlParameter("messages");
+        const urlImage = getUrlParameter("image");
+        const urlTitle = getUrlParameter("title");
+        const urlPopupMessage = getUrlParameter("popupMessage");
+
+        // Default messages theo type
+
+        // Message templates theo styleMessage
+        // Khởi tạo config mặc định
+        window.dataChristmasTree = {
+            template: defaultData.template,
+            data: {
+                title: urlTitle || defaultData.data.title,
+                type_music: defaultData.data.type_music,
+                music_id: urlMusic || defaultData.data.music_id,
+                backgroundMusic: urlMusic || defaultData.data.backgroundMusic,
+                popupMessage: urlPopupMessage || defaultData.data.popupMessage,
+                messages: urlMessages ? (Array.isArray(urlMessages) ? urlMessages : urlMessages.split(',').map(msg => msg.trim())) : defaultData.data.messages,
+                images: urlImage ? (Array.isArray(urlImage) ? urlImage : urlImage.split(',').map(img => img.trim())) : defaultData.data.images
+            }
+        };
+
+        window.Heartlove = {
+            data: {
+                titleMessage: window.dataChristmasTree.data.title,
+                popupMessage: window.dataChristmasTree.data.popupMessage,
+                messages: window.dataChristmasTree.data.messages,
+                images: window.dataChristmasTree.data.images,
+                heartColor: "#fd9595",
+                music: window.dataChristmasTree.data.backgroundMusic
+            }
+        };
+
+        // Hàm cập nhật config vào Heartlove + dataChristmasTree
+        function applyConfig(cfg) {
+            if (cfg.music) {
+                window.dataChristmasTree.data.music_id = cfg.music;
+                window.dataChristmasTree.data.backgroundMusic = cfg.music;
+                window.Heartlove.data.music = cfg.music;
+
+            }
+            if (cfg.messages && cfg.messages.length > 0) {
+                window.dataChristmasTree.data.messages = cfg.messages;
+                window.Heartlove.data.messages = cfg.messages;
+
+            }
+            if (cfg.popupMessage) {
+                window.dataChristmasTree.data.popupMessage = cfg.popupMessage;
+                window.Heartlove.data.popupMessage = cfg.popupMessage;
+            }
+            if (cfg.titleMessage) {
+                window.dataChristmasTree.data.title = cfg.titleMessage;
+                window.Heartlove.data.titleMessage = cfg.titleMessage;
+                var popupTitleEl = document.querySelector('.popup-title');
+                if (popupTitleEl) {
+                    popupTitleEl.textContent = cfg.titleMessage;
+                }
+            }
+            if (cfg.images && cfg.images.length > 0) {
+                window.dataChristmasTree.data.images = cfg.images;
+                window.Heartlove.data.images = cfg.images;
+            }
+            // Dispatch event để các module khác biết config đã update
+            window.dispatchEvent(new CustomEvent('configLoaded', { detail: cfg }));
+        }
+
+        // Loading progress animation
+        if (cfgId) {
+            // Giả lập progress khi đang fetch
+            loadingTimer = setInterval(function () {
+                if (loadingValue < 90) {
+                    loadingValue += Math.random() * 15 + 5;
+                    if (loadingValue > 90) loadingValue = 90;
+                    if (loadingProgress) loadingProgress.style.width = loadingValue + '%';
+                    if (loadingPercent) loadingPercent.textContent = Math.round(loadingValue) + '%';
+                }
+            }, 300);
+        }
+
+        // Hàm ẩn loading overlay
+
+    </script>
+
+
+    <!-- Shooting Stars -->
+    <script>
+        function createShootingStars() {
+            const container = document.getElementById('shooting-stars');
+            const numShootingStars = 20;
+
+            for (let i = 0; i < numShootingStars; i++) {
+                const shootingStar = document.createElement('div');
+                shootingStar.className = 'shooting-star';
+
+                const startX = Math.random() * (window.innerWidth * 0.8) + (window.innerWidth * 0.2);
+                const startY = Math.random() * (window.innerHeight * 0.3);
+
+                shootingStar.style.left = startX + 'px';
+                shootingStar.style.top = startY + 'px';
+
+                const delay = Math.random() * 10;
+                shootingStar.style.animationDelay = delay + 's';
+
+                const size = 3 + Math.random() * 3;
+                shootingStar.style.width = size + 'px';
+                shootingStar.style.height = size + 'px';
+
+                container.appendChild(shootingStar);
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', createShootingStars);
+        } else {
+            createShootingStars();
+        }
+    </script>
+
+    <!-- Load Enhanced Effects (Snow, Galaxy, Fireworks) -->
+    <script type="module" src="enhanced-effects.js"></script>
+
+    <!-- 007 Sphere Gallery -->
+    <style>
+        #sphere-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: auto;
+            display: none;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+
+        #sphere-container.active {
+            display: block;
+            opacity: 1;
+        }
+
+        #sphere-container .element {
+            width: 200px;
+            height: 200px;
+            box-shadow:
+                0 0 10px rgba(249, 146, 146, 0.5),
+                0 0 25px rgba(255, 182, 193, 0.3),
+                0 0 50px rgba(255, 192, 203, 0.15);
+            border: 1px solid rgba(255, 182, 193, 0.4);
+            padding: 0;
+            margin: 0;
+            text-align: center;
+            cursor: default;
+            border-radius: 8px;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        #sphere-container .element:hover {
+            box-shadow:
+                0 0 20px rgba(249, 146, 146, 0.8),
+                0 0 40px rgba(255, 182, 193, 0.5),
+                0 0 70px rgba(255, 192, 203, 0.3);
+            border: 1px solid rgba(255, 182, 193, 0.8);
+        }
+
+        #sphere-container .element img {
+            width: 200px;
+            height: 200px;
+            border-radius: 8px;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Tối ưu cho mobile & in-app browser */
+        @media (max-width: 768px) {
+            #sphere-container .element {
+                box-shadow:
+                    0 0 12px rgba(255, 105, 180, 0.6),
+                    0 0 30px rgba(255, 182, 193, 0.4);
+            }
+
+            #sphere-container .element:hover {
+                box-shadow:
+                    0 0 20px rgba(255, 105, 180, 0.8),
+                    0 0 45px rgba(255, 182, 193, 0.5);
+            }
+        }
+    </style>
+    <!-- Envelope & Letter -->
+    <div id="envelope-overlay"></div>
+    <div id="letter-stage" aria-hidden="true">
+        <div class="letter">
+            <div class="valentines" id="letter-trigger" role="button" tabindex="0" aria-label="Open letter">
+                <div class="envelope"></div>
+                <div class="front"></div>
+                <div class="card">
+                    <div class="heart"></div>
+                </div>
+                <div class="hearts" aria-hidden="true">
+                    <div class="one"></div>
+                    <div class="two"></div>
+                    <div class="three"></div>
+                    <div class="four"></div>
+                    <div class="five"></div>
+                </div>
+            </div>
+            <div class="shadow"></div>
+        </div>
+    </div>
+
+    <div class="wrapperLetterForm" aria-hidden="true">
+        <div class="boxLetter">
+            <button class="letter-close" id="letter-close-btn" type="button" aria-label="Close letter">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="formLetter">
+                <div class="heartLetter">
+                    <div class="heartLetterItem"></div>
+                </div>
+                <div class="heartLetter">
+                    <div class="heartLetterItem"></div>
+                </div>
+                <div class="wrapperLetter">
+                    <div class="giftbox" aria-hidden="true">
+                        <div class="img">
+                            <img src="image/giftbox.png" alt="">
+                        </div>
+                    </div>
+                    <div class="textLetter">
+                        <h2 class="popup-title clone-letter-title"></h2>
+                        <p class="contentLetter">
+                            <span id="letter-content-text"></span><span class="typewriter-cursor"
+                                aria-hidden="true"></span>
+                        </p>
+                        <div class="heartAnimation" aria-hidden="true">
+                            <img src="image/heartAnimation.gif" alt="">
+                        </div>
+                    </div>
+                    <div class="mewmew1" aria-hidden="true">
+                        <img src="image/mewmew.gif" alt="">
+                    </div>
+                    <div class="mewmew2" aria-hidden="true">
+                        <img src="image/mewmew.gif" alt="">
+                    </div>
+                    <div class="signature">Saphocit,<br> &#10084;</div>
+                </div>
+            </div>
+            <div class="before"></div>
+        </div>
+    </div>
+
+    <div id="sphere-container"></div>
+    <script src="js/three.js"></script>
+    <script src="js/tween.min.js"></script>
+    <script src="js/TrackballControls.js"></script>
+    <script src="js/CSS3DRenderer.js"></script>
+    <script>
+        (function () {
+            var sphereReady = false;
+            var normalizedImageCache = {};
+
+            window.addEventListener('textMessagesComplete', function () {
+                setTimeout(initSphereGallery, 500);
+            });
+
+            // Crop + resize ảnh về 1 size cố định bằng canvas (object-fit: cover)
+            // → mọi CSS3D element hiển thị đồng nhất, không bị méo do aspect ratio gốc khác nhau
+            function normalizeImage(url, size) {
+                if (normalizedImageCache[url]) return Promise.resolve(normalizedImageCache[url]);
+                return new Promise(function (resolve) {
+                    var img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = function () {
+                        try {
+                            var canvas = document.createElement('canvas');
+                            canvas.width = size;
+                            canvas.height = size;
+                            var ctx = canvas.getContext('2d');
+                            var ratio = Math.max(size / img.width, size / img.height);
+                            var w = img.width * ratio;
+                            var h = img.height * ratio;
+                            ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+                            var dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                            normalizedImageCache[url] = dataUrl;
+                            resolve(dataUrl);
+                        } catch (e) {
+                            resolve(url);
+                        }
+                    };
+                    img.onerror = function () { resolve(url); };
+                    img.src = url;
+                });
+            }
+
+            async function initSphereGallery() {
+                if (sphereReady) return;
+                sphereReady = true;
+
+                var container = document.getElementById('sphere-container');
+
+                // Lấy ảnh từ config
+                var images = [];
+                if (window.Heartlove && window.Heartlove.data && window.Heartlove.data.images) {
+                    images = window.Heartlove.data.images;
+                } else if (window.dataChristmasTree && window.dataChristmasTree.data && window.dataChristmasTree.data.images) {
+                    images = window.dataChristmasTree.data.images;
+                }
+                if (!images || images.length === 0) {
+                    images = ["image/anh1.jpg", "image/anh2.jpg", "image/anh3.jpg", "image/anh4.jpg", "image/anh5.jpg", "image/anh6.jpg", "image/anh7.jpg", "image/anh8.jpg", "image/anh9.jpg", "image/anh10.jpg"];
+                }
+
+                // Detect in-app browser (Zalo, Facebook, etc.)
+                var ua = navigator.userAgent || '';
+                var isInApp = /Zalo|FBAN|FBAV|Instagram|Line|MicroMessenger/i.test(ua);
+                var isMob = window.innerWidth < 768;
+
+                // Lat-Lon grid: N hàng × (2N·sin phi) cột → hàng ngang thẳng
+                // N chọn sao cho cell_height = π·r/N ≥ size ảnh (200px)
+                // → cell hơi lớn hơn ảnh → góc ảnh liền kề KHÔNG đè (chỉ khe nhỏ ~5%)
+                // Desktop: π·800/12 = 209 ≥ 200 ✓ | Mobile: π·540/8 = 212 ≥ 200 ✓
+                var gridN;
+                if (isInApp) {
+                    gridN = isMob ? 6 : 7;
+                } else {
+                    gridN = isMob ? 8 : 12;
+                }
+                var cellList = [];
+                for (var row = 0; row < gridN; row++) {
+                    var phiRow = Math.PI * (row + 0.5) / gridN;
+                    var nCols = Math.max(1, Math.round(2 * gridN * Math.sin(phiRow)));
+                    for (var col = 0; col < nCols; col++) {
+                        cellList.push({ phi: phiRow, theta: 2 * Math.PI * col / nCols });
+                    }
+                }
+                var totalItems = cellList.length;
+                var personArray = [];
+                for (var i = 0; i < totalItems; i++) {
+                    personArray.push({ image: images[i % images.length] });
+                }
+
+                // Preload + crop ảnh về 210x210 đồng nhất TRƯỚC khi build cầu
+                var uniqueImages = [];
+                for (var k = 0; k < personArray.length; k++) {
+                    if (uniqueImages.indexOf(personArray[k].image) === -1) {
+                        uniqueImages.push(personArray[k].image);
+                    }
+                }
+                // Mobile zoom sát hơn (camera vào gần tâm cầu) + DPR cao → cần ảnh source lớn hơn
+                // để khi bay vào trong cầu (state 1) không bị vỡ pixel
+                var dpr = Math.min(window.devicePixelRatio || 1, 3);
+                var normalizeSize = Math.round((isMob ? 220 : 200) * dpr); // mobile ~440-660, desktop ~200-400
+                var normalizedResults = await Promise.all(uniqueImages.map(function (url) {
+                    return normalizeImage(url, normalizeSize);
+                }));
+                var normalizedMap = {};
+                for (var k = 0; k < uniqueImages.length; k++) {
+                    normalizedMap[uniqueImages[k]] = normalizedResults[k];
+                }
+
+                var sCamera, sScene, sRenderer, sControls;
+                var objects = [];
+                var targets = { sphere: [], sphereIn: [], rising: [] };
+                var clickState = 0; // 0=sphere, 1=inside, 2=rising
+                var isAnimating = false;
+                var risingAnim = false;
+
+                // Camera
+                sCamera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
+                sCamera.position.z = 3000;
+
+                sScene = new THREE.Scene();
+
+                // Tạo elements
+                for (var i = 0; i < personArray.length; i++) {
+                    var element = document.createElement('div');
+                    element.className = 'element';
+                    element.style.backgroundColor = 'transparent';
+
+                    var img = document.createElement('img');
+                    img.src = normalizedMap[personArray[i].image] || personArray[i].image;
+                    element.appendChild(img);
+
+                    var object = new THREE.CSS3DObject(element);
+                    object.position.x = Math.random() * 4000 - 2000;
+                    object.position.y = Math.random() * 4000 - 2000;
+                    object.position.z = Math.random() * 4000 - 2000;
+                    sScene.add(object);
+                    objects.push(object);
+                }
+
+                // Vị trí sphere — dùng cellList từ lat-lon grid (đã tính ở trên)
+                // target.up = (0,1,0) khóa roll → ảnh trong cùng hàng có cạnh trên thẳng level
+                var vector = new THREE.Vector3();
+                var spherical = new THREE.Spherical();
+                var sphereRadius = isMob ? 540 : 800;
+
+                for (var i = 0, l = objects.length; i < l; i++) {
+                    var phi = cellList[i].phi;
+                    var theta = cellList[i].theta;
+
+                    var target = new THREE.Object3D();
+                    spherical.set(sphereRadius, phi, theta);
+                    target.position.setFromSpherical(spherical);
+                    target.up.set(0, 1, 0);
+                    vector.copy(target.position).multiplyScalar(2);
+                    target.lookAt(vector);
+                    targets.sphere.push(target);
+                }
+
+                // Sphere nhìn từ bên trong (ảnh quay vào trong) — cùng cellList
+                for (var i = 0, l = objects.length; i < l; i++) {
+                    var phi = cellList[i].phi;
+                    var theta = cellList[i].theta;
+
+                    var target = new THREE.Object3D();
+                    spherical.set(sphereRadius, phi, theta);
+                    target.position.setFromSpherical(spherical);
+                    target.up.set(0, 1, 0);
+                    target.lookAt(new THREE.Vector3(0, 0, 0));
+                    targets.sphereIn.push(target);
+                }
+
+                // Rising - 15 ảnh bay từ dưới lên
+                var risingCount = 15;
+                var risingCols = 3;
+                var risingSpacing = 280;
+                for (var i = 0, l = objects.length; i < l; i++) {
+                    var target = new THREE.Object3D();
+                    if (i < risingCount) {
+                        var col = i % risingCols;
+                        var row = Math.floor(i / risingCols);
+                        target.position.x = (col - 1) * risingSpacing;
+                        target.position.y = -1500 + row * risingSpacing;
+                        target.position.z = 0;
+                    } else {
+                        target.position.x = 0;
+                        target.position.y = -99999;
+                        target.position.z = 0;
+                    }
+                    target.rotation.x = 0;
+                    target.rotation.y = 0;
+                    target.rotation.z = 0;
+                    targets.rising.push(target);
+                }
+
+                // Renderer
+                sRenderer = new THREE.CSS3DRenderer();
+                sRenderer.setSize(window.innerWidth, window.innerHeight);
+                sRenderer.domElement.style.position = 'absolute';
+                container.appendChild(sRenderer.domElement);
+
+                // Controls
+                sControls = new THREE.TrackballControls(sCamera, sRenderer.domElement);
+                sControls.rotateSpeed = 0.5;
+                sControls.minDistance = 500;
+                sControls.maxDistance = 6000;
+                sControls.addEventListener('change', function () { sRenderer.render(sScene, sCamera); });
+
+                // Hiện container
+                container.style.display = 'block';
+                requestAnimationFrame(function () { container.classList.add('active'); });
+
+                // Transform sang sphere
+                transformSphere(objects, targets.sphere, 2000, sRenderer, sScene, sCamera);
+
+                // Click để chuyển cảnh: cầu → vào trong → bay lên → quay lại cầu
+                sRenderer.domElement.addEventListener('click', function () {
+                    if (isAnimating) return;
+                    isAnimating = true;
+
+                    if (clickState === 0) {
+                        // Bay vào trong cầu — mobile dừng cách tâm 1 chút để ảnh không bị zoom quá sát (vỡ pixel)
+                        var insideZ = isMob ? 180 : 0;
+                        transformSphere(objects, targets.sphereIn, 1500, sRenderer, sScene, sCamera);
+                        new TWEEN.Tween(sCamera.position)
+                            .to({ x: 0, y: 0, z: insideZ }, 2000)
+                            .easing(TWEEN.Easing.Cubic.InOut)
+                            .onUpdate(function () { sRenderer.render(sScene, sCamera); })
+                            .onComplete(function () {
+                                clickState = 1;
+                                isAnimating = false;
+                                sControls.minDistance = 0;
+                            })
+                            .start();
+                    } else if (clickState === 1) {
+                        // Ảnh bay từ dưới lên + hiện envelope
+                        transformSphere(objects, targets.rising, 2000, sRenderer, sScene, sCamera);
+                        new TWEEN.Tween(sCamera.position)
+                            .to({ x: 0, y: 0, z: 1500 }, 2000)
+                            .easing(TWEEN.Easing.Cubic.InOut)
+                            .onUpdate(function () { sRenderer.render(sScene, sCamera); })
+                            .onComplete(function () {
+                                clickState = 3;
+                                isAnimating = false;
+                                sControls.minDistance = 200;
+                                risingAnim = true;
+                                showEnvelope();
+                            })
+                            .start();
+                    } else {
+                        // Click envelope → đóng envelope, quay lại hình cầu
+                        hideEnvelope();
+                        risingAnim = false;
+                        transformSphere(objects, targets.sphere, 1500, sRenderer, sScene, sCamera);
+                        new TWEEN.Tween(sCamera.position)
+                            .to({ x: 0, y: 0, z: 3000 }, 2000)
+                            .easing(TWEEN.Easing.Cubic.InOut)
+                            .onUpdate(function () { sRenderer.render(sScene, sCamera); })
+                            .onComplete(function () {
+                                clickState = 0;
+                                isAnimating = false;
+                                sControls.minDistance = 500;
+                            })
+                            .start();
+                    }
+                });
+
+                // Reset to sphere (called from popup close)
+                window.resetToSphere = function () {
+                    hideEnvelope();
+                    risingAnim = false;
+                    transformSphere(objects, targets.sphere, 1500, sRenderer, sScene, sCamera);
+                    new TWEEN.Tween(sCamera.position)
+                        .to({ x: 0, y: 0, z: 3000 }, 2000)
+                        .easing(TWEEN.Easing.Cubic.InOut)
+                        .onUpdate(function () { sRenderer.render(sScene, sCamera); })
+                        .onComplete(function () {
+                            clickState = 0;
+                            isAnimating = false;
+                            sControls.minDistance = 500;
+                        })
+                        .start();
+                };
+
+                // Animation loop
+                function animateSphere() {
+                    requestAnimationFrame(animateSphere);
+                    if (risingAnim) {
+                        for (var i = 0; i < 15 && i < objects.length; i++) {
+                            objects[i].position.y += 0.8;
+                        }
+                        sScene.rotation.y = 0;
+                    } else {
+                        sScene.rotation.y += 0.002;
+                    }
+                    TWEEN.update();
+                    sControls.update();
+                    sRenderer.render(sScene, sCamera);
+                }
+                animateSphere();
+
+                // Resize
+                window.addEventListener('resize', function () {
+                    sCamera.aspect = window.innerWidth / window.innerHeight;
+                    sCamera.updateProjectionMatrix();
+                    sRenderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+            }
+
+            function transformSphere(objects, targets, duration, renderer, scene, camera) {
+                TWEEN.removeAll();
+                for (var i = 0; i < objects.length; i++) {
+                    var object = objects[i];
+                    var target = targets[i];
+
+                    new TWEEN.Tween(object.position)
+                        .to({ x: target.position.x, y: target.position.y, z: target.position.z }, Math.random() * duration + duration)
+                        .easing(TWEEN.Easing.Exponential.InOut)
+                        .start();
+
+                    new TWEEN.Tween(object.rotation)
+                        .to({ x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration)
+                        .easing(TWEEN.Easing.Exponential.InOut)
+                        .start();
+                }
+
+                new TWEEN.Tween({})
+                    .to({}, duration * 2)
+                    .onUpdate(function () { renderer.render(scene, camera); })
+                    .start();
+            }
+        })();
+    </script>
+
+    <!-- Envelope & Letter Logic -->
+    <script>
+        (function () {
+            var envelopeOverlay = document.getElementById('envelope-overlay');
+            var letterStage = document.getElementById('letter-stage');
+            var letterTrigger = document.getElementById('letter-trigger');
+            var letterForm = document.querySelector('.wrapperLetterForm');
+            var letterCloseBtn = document.getElementById('letter-close-btn');
+            var titleEl = document.querySelector('.textLetter h2');
+            var contentEl = document.getElementById('letter-content-text');
+            var titleTimer = null;
+            var contentTimer = null;
+            var openTimer = null;
+
+            var fallbackTitle = 'G\u1eedi em !';
+            var fallbackMessage = 'H\u00f4m nay l\u00e0 ng\u00e0y 20/10 - ng\u00e0y d\u00e0nh ri\u00eang cho nh\u1eefng ng\u01b0\u1eddi con g\u00e1i tuy\u1ec7t v\u1eddi nh\u1ea5t. Anh ch\u1ec9 mu\u1ed1n n\u00f3i r\u1eb1ng: C\u1ea3m \u01a1n em v\u00ec \u0111\u00e3 \u0111\u1ebfn b\u00ean anh, mang \u0111\u1ebfn cho anh ni\u1ec1m vui, s\u1ef1 b\u00ecnh y\u00ean v\u00e0 nh\u1eefng y\u00eau th\u01b0\u01a1ng ng\u1ecdt ng\u00e0o nh\u1ea5t. D\u00f9 c\u00f3 bao nhi\u00eau 20/10 \u0111i n\u1eefa, anh v\u1eabn mu\u1ed1n l\u00e0 ng\u01b0\u1eddi \u0111\u1ea7u ti\u00ean \u0111\u01b0\u1ee3c g\u1eedi l\u1eddi ch\u00fac \u0111\u1ebfn em \ud83d\udc97';
+
+            // Show envelope
+            window.showEnvelope = function () {
+                envelopeOverlay.classList.add('show');
+                letterStage.classList.remove('opening');
+                letterStage.classList.add('show');
+                letterStage.setAttribute('aria-hidden', 'false');
+            };
+
+            // Hide envelope
+            window.hideEnvelope = function () {
+                envelopeOverlay.classList.remove('show');
+                letterStage.classList.remove('show', 'opening');
+                letterStage.setAttribute('aria-hidden', 'true');
+            };
+
+            function openLetterForm() {
+                letterStage.classList.add('opening');
+                openTimer = setTimeout(function () {
+                    window.hideEnvelope();
+                    letterForm.classList.add('show');
+                    letterForm.setAttribute('aria-hidden', 'false');
+                    startLetterText();
+                }, 520);
+            }
+
+            function getLetterTitle() {
+                if (window.Heartlove && window.Heartlove.data && window.Heartlove.data.titleMessage) {
+                    return window.Heartlove.data.titleMessage;
+                }
+                if (window.dataChristmasTree && window.dataChristmasTree.data && window.dataChristmasTree.data.title) {
+                    return window.dataChristmasTree.data.title;
+                }
+                return fallbackTitle;
+            }
+
+            function getLetterMessage() {
+                if (window.Heartlove && window.Heartlove.data && window.Heartlove.data.popupMessage) {
+                    return window.Heartlove.data.popupMessage;
+                }
+                return fallbackMessage;
+            }
+
+            function clearTypewriterTimers() {
+                if (titleTimer) clearTimeout(titleTimer);
+                if (contentTimer) clearTimeout(contentTimer);
+                if (openTimer) clearTimeout(openTimer);
+                titleTimer = null;
+                contentTimer = null;
+                openTimer = null;
+            }
+
+            function typeText(el, value, speed, done) {
+                var index = 0;
+                function tick() {
+                    if (index < value.length) {
+                        el.textContent += value.charAt(index);
+                        index++;
+                        var timer = setTimeout(tick, speed);
+                        if (el === titleEl) {
+                            titleTimer = timer;
+                        } else {
+                            contentTimer = timer;
+                        }
+                    } else if (done) {
+                        done();
+                    }
+                }
+                tick();
+            }
+
+            function startLetterText() {
+                clearTypewriterTimers();
+                titleEl.textContent = '';
+                contentEl.textContent = '';
+                typeText(titleEl, getLetterTitle(), 75, function () {
+                    contentTimer = setTimeout(function () {
+                        typeText(contentEl, getLetterMessage(), 28);
+                    }, 250);
+                });
+            }
+
+            // Close letter -> return to sphere
+            function closeLetter() {
+                clearTypewriterTimers();
+                letterForm.classList.remove('show');
+                letterForm.setAttribute('aria-hidden', 'true');
+                if (window.resetToSphere) window.resetToSphere();
+            }
+
+            letterTrigger.addEventListener('click', function (e) {
+                e.stopPropagation();
+                openLetterForm();
+            });
+
+            letterTrigger.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openLetterForm();
+                }
+            });
+
+            letterCloseBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                closeLetter();
+            });
+
+            letterForm.addEventListener('click', function (e) {
+                if (e.target === letterForm) {
+                    closeLetter();
+                }
+            });
+        })();
+    </script>
+    <!-- Music Toggle Button -->
+    <button id="musicToggle" aria-label="Toggle music">
+        <i class="fa-solid fa-music"></i>
+    </button>
+
+    <!-- Music Manager -->
+    <script>
+        (function () {
+            var btn = document.getElementById('musicToggle');
+            var audio = null;
+            var isPlaying = false;
+            var musicUrl = '';
+            var musicReady = false;
+
+            function getMusicUrl() {
+                if (window.Heartlove && window.Heartlove.data && window.Heartlove.data.music) {
+                    return window.Heartlove.data.music;
+                }
+                if (window.dataChristmasTree && window.dataChristmasTree.data) {
+                    return window.dataChristmasTree.data.backgroundMusic || window.dataChristmasTree.data.music_id || '';
+                }
+                return '';
+            }
+
+            function initAndPlay() {
+                var url = musicUrl || getMusicUrl();
+                if (!url) return;
+                // Tạo mới Audio trong user gesture để mobile cho phép play
+                if (audio) {
+                    audio.pause();
+                    audio.src = '';
+                }
+                audio = new Audio(url);
+                audio.loop = true;
+                audio.volume = 0.7;
+                audio.addEventListener('error', function () {
+                    console.error('[Music] Audio load error:', audio.error);
+                });
+                audio.play().then(function () {
+                    isPlaying = true;
+                    btn.classList.add('playing');
+                    btn.querySelector('i').className = 'fa-solid fa-music';
+                    console.log('[Music] Playing OK');
+                }).catch(function (err) {
+                    console.warn('[Music] play() failed:', err.name, err.message);
+                });
+            }
+
+            function playMusic() {
+                if (!audio || !audio.src) return;
+                audio.play().then(function () {
+                    isPlaying = true;
+                    btn.classList.add('playing');
+                    btn.querySelector('i').className = 'fa-solid fa-music';
+                }).catch(function (err) {
+                    console.warn('[Music] play() retry failed:', err.name, err.message);
+                });
+            }
+
+            function toggleMusic() {
+                if (isPlaying) {
+                    audio.pause();
+                    isPlaying = false;
+                    btn.classList.remove('playing');
+                    btn.querySelector('i').className = 'fa-solid fa-volume-xmark';
+                } else {
+                    if (!audio || !audio.src) {
+                        initAndPlay();
+                    } else {
+                        playMusic();
+                    }
+                }
+            }
+
+            // Fallback: play nhạc khi user tương tác lần đầu (quan trọng cho mobile)
+            function onFirstInteraction() {
+                if (isPlaying) return;
+                if (!musicReady) return;
+                initAndPlay();
+                // Gỡ tất cả listener sau khi đã thử
+                ['click', 'touchstart', 'touchend', 'keydown'].forEach(function (evt) {
+                    document.removeEventListener(evt, onFirstInteraction);
+                });
+            }
+
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleMusic();
+            });
+
+            // Đăng ký listener chờ user gesture
+            ['click', 'touchstart', 'touchend', 'keydown'].forEach(function (evt) {
+                document.addEventListener(evt, onFirstInteraction);
+            });
+
+            // Khi config đã sẵn sàng (từ API hoặc mặc định)
+            function startMusic() {
+                if (!musicUrl) {
+                    musicUrl = getMusicUrl();
+                }
+                musicReady = true;
+                console.log('[Music] startMusic, url:', musicUrl);
+                console.log('[Music] Heartlove.data.music:', window.Heartlove && window.Heartlove.data && window.Heartlove.data.music);
+                if (!musicUrl) return;
+                // Thử autoplay (sẽ thành công trên desktop, fail trên mobile)
+                initAndPlay();
+            }
+
+            // Nếu có cfgId (đang fetch API) → đợi configLoaded
+            var urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('id')) {
+                window.addEventListener('configLoaded', function (e) {
+                    // Nhận music URL trực tiếp từ event detail
+                    if (e.detail && e.detail.music) {
+                        musicUrl = e.detail.music;
+                        console.log('[Music] Got music from configLoaded event:', musicUrl);
+                    }
+                    startMusic();
+                });
+            } else {
+                startMusic();
+            }
+        })();
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Modal handling
+            const modal = document.getElementById('image-modal');
+            const modalImage = document.getElementById('modal-image');
+            const closeBtn = document.getElementById('modal-close-btn');
+
+            if (modal) {
+                modal.addEventListener('click', () => {
+                    modal.classList.remove('active');
+                    modalImage.src = '';
+                });
+            }
+
+            if (modalImage) {
+                modalImage.addEventListener('click', (e) => e.stopPropagation());
+            }
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    modal.classList.remove('active');
+                    modalImage.src = '';
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
